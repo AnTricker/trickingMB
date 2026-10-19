@@ -1,0 +1,92 @@
+
+# ==========================================
+# Python / Cache
+# ==========================================
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Conda / Virtual Environments
+# ==========================================
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+conda-env/
+
+# ==========================================
+# IDE / OS
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# Build / Distribution
+# ==========================================
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# ==========================================
+# Model Weights / Checkpoints
+# ==========================================
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+*.bin
+
+MotionBERT/checkpoint/
+MotionBERT/data/mesh/
+
+# ==========================================
+# Input Videos / Data
+# ==========================================
+/MotionBERT/input/*
+!MotionBERT/input/.gitkeep
+
+/rtmpose/input/*
+!rtmpose/input/.gitkeep
+
+# ==========================================
+# Inference Results
+# ==========================================
+/MotionBERT/output/*
+!MotionBERT/output/.gitkeep
+
+/rtmpose/output/*
+!rtmpose/output/.gitkeep
+
+# ==========================================
+# Generated Data / Intermediate Files
+# ==========================================
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# ==========================================
+# Logs / Temporary Files
+# ==========================================
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# ==========================================
+# Jupyter
+# ==========================================
+.ipynb_checkpoints/
