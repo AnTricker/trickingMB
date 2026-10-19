@@ -361,10 +361,7 @@ git clone https://github.com/Walter0807/MotionBERT.git
 
 ### 8.2 Prepare Environment
 
-可沿用已存在的 `(motionbert)` 環境。
-
-全新部署：
-
+conda env
 ```cmd
 conda create -n motionbert python=3.10 -y
 conda activate motionbert
@@ -874,3 +871,6 @@ python -c "import json; d=json.load(open('input/alphapose-results.json')); print
 - [MotionBERT Human Mesh Recovery](https://github.com/Walter0807/MotionBERT/blob/main/docs/mesh.md)
 - [MotionBERT Halpe-26 Mapping](https://github.com/Walter0807/MotionBERT/blob/main/lib/data/dataset_wild.py)
 - [SMPLify / SMPL Model](https://smplify.is.tue.mpg.de/)
+
+---
+This project integrates MotionBERT, originally developed by its respective authors. The MotionBERT source code and its license are retained in the MotionBERT/ directory. Modifications in this repository are documented separately.
