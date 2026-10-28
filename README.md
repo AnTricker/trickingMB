@@ -231,115 +231,31 @@ https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body
 
 ## 6. RTMPose Inference
 
-在 `rtmpose/run.py`：
+執行指令
+在指定 Conda 環境、目錄下：
+使用 RTMPose-m（預設）
+python run.py --input input/rodeoCorkscrew.mp4
 
-```python
-from mmpose.apis import MMPoseInferencer
 
-inferencer = MMPoseInferencer(
-    pose2d="body26",
-    device="cuda:0"
-)
+使用 RTMPose-l
+python run.py --input input/rodeoCorkscrew.mp4 --model l
 
-for _ in inferencer(
-    "input/1.mp4",
-    out_dir="output",
-    draw_bbox=True,
-    show=False
-):
-    pass
 
-print("RTMPose inference completed")
-```
+使用 RTMPose-x
+python run.py --input input/rodeoCorkscrew.mp4 --model x
 
-執行：
 
-```cmd
-conda activate rtmpose
-cd ~\motionBert\rtmpose
-python run.py
-```
+也可以指定其他影片及輸出資料夾：
+python run.py --input input/butterflyTwist.mp4 --model x --output output
 
-產物：
 
-```text
-output/
-├── predictions/
-│   └── 1.json
-└── visualizations/
-    └── 1.mp4
-```
+輸出後如何接 MotionBERT？
+例如執行 --model l 後：
+output/alphapose/rodeoCorkscrew_l.json
 
-`1.json` 包含每個影格的 `frame_id`、`instances`、`keypoints`、`keypoint_scores` 及 Bounding Box。
 
-注意：RTMPose 在多人畫面中可能偵測出多位人物。模型本身的單幀推論不保證跨影格人物 ID 一致。
-
----
-
-# Part B — RTMPose to MotionBERT
-
-## 7. JSON Format Conversion
-
-MotionBERT 官方 `dataset_wild.py` 支援 Halpe-26 → H36M-17 mapping：
-
-https://github.com/Walter0807/MotionBERT/blob/main/lib/data/dataset_wild.py
-
-官方函式：
-
-```python
-halpe2h36m(x)
-```
-
-輸入與輸出：
-
-```text
-(T, 26, 3)
-    ↓
-(T, 17, 3)
-```
-
-然而，MotionBERT 的 `read_input()` 預期 AlphaPose JSON 格式。因此需要執行本專案的 `convert.py`，先做 JSON Adapter。
-
-### 7.1 Convert JSON
-
-在 `rtmpose` 資料夾執行：
-
-```cmd
-python convert.py --input output/predictions/1.json --output output/alphapose-results.json
-```
-
-輸出：
-
-```text
-rtmpose/output/alphapose-results.json
-```
-
-格式範例：
-
-```json
-[
-  {
-    "image_id": "0.jpg",
-    "idx": 0,
-    "keypoints": [345.84, 488.98, 0.79]
-  }
-]
-```
-
-上面僅展示一個關節；完整資料每幀包含 26 × 3 = 78 個數值。
-
-目前 `convert.py` 採用最大 Bounding Box 選取人物，適合單人主角且其他人物較小的測試影片。多人或主角遠離鏡頭的影片，仍需使用 tracking ID 或其他跨影格關聯方法。
-
-### 7.2 Copy Inputs to MotionBERT
-
-```cmd
-copy output\alphapose-results.json ..\MotionBERT\input\alphapose-results.json
-```
-
-```cmd
-copy input\1.mp4 ..\MotionBERT\input\1.mp4
-```
-
+這個檔案可以直接複製到 MotionBERT/input/，再執行原本的 infer_wild.py。
+注意兩件事： RTMPose-l／x 首次使用可能需要下載對應權重；而目前的 max(bbox_area) 仍是逐幀選擇最大人物，沒有跨影格身份追蹤。此外，若某幀完全沒偵測到人，程式會明確報錯，不會自行補幀，避免把不完整的 2D 序列送進 MotionBERT。
 ---
 
 # Part C — MotionBERT Deployment
