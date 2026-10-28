@@ -544,75 +544,35 @@ testloader_params = {
 
 同樣移除 `prefetch_factor` 與 `persistent_workers`。
 
-### 10.5 Run 3D Pose Estimation (Generate X3D.npy)
+### 10.5 batch inference
+先啟用之前建好的 motionbert 環境：
+conda activate motionbert
+cd /d C:\coding\motionBert\MotionBERT
 
-在執行 3D Mesh Recovery 前，可先透過 MotionBERT 的 `infer_wild.py` 產生 3D Skeleton，取得後續 Mesh Root Motion 調整所需的 `X3D.npy`。
 
-**Step 1 — 執行 3D Pose Estimation**
+A. 完整執行 3D Skeleton + Mesh
+python batch_infer.py
 
-```cmd
-python infer_wild.py --vid_path input/1.mp4 --json_path input/alphapose-results.json --out_path output
-```
 
-**Step 2 — 確認輸出**
+B. 只生成 X3D（建議先用這個驗證所有影片）
+python batch_infer.py --skip-mesh
 
-```text
-MotionBERT/
-└── output/
-    ├── X3D.npy
-    └── X3D.mp4
-```
 
-| File | Description |
-|---|---|
-| `X3D.npy` | 3D Skeleton 座標，shape 為 `(T, 17, 3)`，包含每幀的 17 個 H36M 關節 |
-| `X3D.mp4` | 3D Skeleton 視覺化影片 |
+C. 強制重新推論，覆蓋既有結果
+python batch_infer.py --force
 
-### 10.6 Run 3D Mesh Recovery
 
-MotionBERT 提供 `infer_wild_mesh.py`，將 2D Keypoints 重建為 SMPL 3D Human Mesh。
+D. 指定其他輸入、輸出資料夾
+python batch_infer.py --input input --output output
 
-**Option A — 不使用 3D Skeleton Reference**
 
-```cmd
-python infer_wild_mesh.py --vid_path input/1.mp4 --json_path input/alphapose-results.json --out_path output/mesh
-```
-
-**Option B — 使用 X3D.npy 作為 3D Motion Reference（建議）**
-
-```cmd
-python infer_wild_mesh.py --vid_path input/1.mp4 --json_path input/alphapose-results.json --out_path output/mesh --ref_3d_motion_path output/X3D.npy
-```
-
-`--ref_3d_motion_path` 會利用先前估計的 3D Skeleton 作為參考，進行 Mesh 的尺度匹配與 Root Trajectory 調整。由於參考資料本身仍是單視角估計結果，因此無法保證真實世界尺度與位置精度。
-
-**Output**
-
-```text
-MotionBERT/
-└── output/
-    ├── X3D.npy
-    ├── X3D.mp4
-    └── mesh/
-        └── mesh.mp4
-```
-
-- `X3D.npy`：3D Skeleton 數值資料。
-- `X3D.mp4`：3D Skeleton 視覺化。
-- `mesh.mp4`：SMPL 3D Mesh 視覺化。
-
-**注意：** Mesh 腳本需要 CUDA-enabled PyTorch。Windows 環境應將 `infer_wild.py` 與 `infer_wild_mesh.py` 的 DataLoader `num_workers` 設定為 `0`，避免 multiprocessing 錯誤。
-### 10.6 Mesh Output
-
-```text
-MotionBERT/output/mesh/
-└── mesh.mp4
-```
-
-`mesh.mp4` 為 3D SMPL Mesh 視覺化影片。
-
-官方 `infer_wild_mesh.py` 預設在記憶體中計算 `verts_all`，但不會直接儲存 `.obj`、`.ply`、`.npy` 頂點資料。若要用於 Blender 或後續 3D 分析，需要另外擴充匯出程式。
-
+注意事項
+1. 批次處理會逐支呼叫原本的兩個推論程式，因此每支影片仍會重新載入 MotionBERT checkpoint；不過不需要修改原有推論程式，兼容性較高。
+2. 預設會跳過已存在的完整輸出；例如 X3D 已完成、Mesh 尚未完成，就只執行 Mesh。
+3. 如果某支影片的 JSON 找不到對應原始影片，會列出錯誤並繼續其他影片。
+4. Mesh Recovery 使用該影片生成的 X3D.npy 作為 --ref_3d_motion_path，沿用你之前跑通的方式。
+5. 目前沿用 infer_wild.py 和 infer_wild_mesh.py 既有的輸出檔名 X3D.mp4、X3D.npy、mesh.mp4；若你本地版本輸出位置不同，需相應調整程式中的來源路徑。
+建議先用 python batch_infer.py --skip-mesh，將現有的 Tricking 影片全部重建為 X3D。 這樣就能直接整理 HW3 所需的跨動作 3D Reconstruction 與 Failure Analysis，再針對有代表性的案例補跑 Mesh。
 ---
 
 # Part F — Complete Execution Workflow
