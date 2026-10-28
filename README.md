@@ -233,20 +233,20 @@ https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-body
 
 執行指令
 在指定 Conda 環境、目錄下：
-使用 RTMPose-m（預設）
-python run.py --input input/rodeoCorkscrew.mp4
+```bash
+# 單一影片，預設 RTMPose-m
+python run.py --input input/aerial.mp4
 
+# 整個資料夾，RTMPose-l
+python run.py --input input/ --model l
 
-使用 RTMPose-l
-python run.py --input input/rodeoCorkscrew.mp4 --model l
+# 整個資料夾，RTMPose-x
+python run.py --input input/ --model x
 
+# 指定輸出位置
+python run.py --input input/ --model l --output output
+```
 
-使用 RTMPose-x
-python run.py --input input/rodeoCorkscrew.mp4 --model x
-
-
-也可以指定其他影片及輸出資料夾：
-python run.py --input input/butterflyTwist.mp4 --model x --output output
 
 
 輸出後如何接 MotionBERT？
