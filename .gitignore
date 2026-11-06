@@ -8,6 +8,15 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+__pypackages__/
 
 # ==========================================
 # Conda / Virtual Environments
@@ -19,6 +28,9 @@ __pycache__/
 venv/
 env/
 conda-env/
+ENV/
+env.bak/
+venv.bak/
 
 # ==========================================
 # IDE / OS
@@ -37,37 +49,55 @@ dist/
 *.egg-info/
 *.egg
 pip-wheel-metadata/
+.eggs/
+*.pyd
+*.so
 
 # ==========================================
 # Model Weights / Checkpoints
 # ==========================================
 *.pth
+*.pth.tr
+*.pth.tar
 *.pt
 *.ckpt
 *.safetensors
 *.onnx
 *.bin
+*.weights
+*.engine
 
-MotionBERT/checkpoint/
-MotionBERT/data/mesh/
+checkpoint/
+checkpoints/
+/MotionBERT/data/mesh/
+/MotionBERT/params/
+
+# Downloaded MotionAGFormer datasets; keep data/ Python source tracked.
+/MotionAGFormer/data/motion3d/
 
 # ==========================================
 # Input Videos / Data
 # ==========================================
-/MotionBERT/input/*
-!MotionBERT/input/.gitkeep
+# Match data folders at any depth, but keep directory placeholders.
+**/input/*
+!**/input/.gitkeep
+**/inputs/*
+!**/inputs/.gitkeep
 
-/rtmpose/input/*
-!rtmpose/input/.gitkeep
+# MotionAGFormer demo inputs; retain the upstream sample video.
+/MotionAGFormer/demo/video/*
+!/MotionAGFormer/demo/video/.gitkeep
+!/MotionAGFormer/demo/video/sample_video.mp4
 
 # ==========================================
 # Inference Results
 # ==========================================
-/MotionBERT/output/*
-!MotionBERT/output/.gitkeep
-
-/rtmpose/output/*
-!rtmpose/output/.gitkeep
+**/output/*
+!**/output/.gitkeep
+**/outputs/*
+!**/outputs/.gitkeep
+**/output-*/*
+!**/output-*/.gitkeep
 
 # ==========================================
 # Generated Data / Intermediate Files
@@ -77,22 +107,40 @@ MotionBERT/data/mesh/
 *.pkl
 *.pickle
 
+# GVHMR ships these small runtime resources with its source code.
+# They are regressors, mappings and metadata, not downloaded checkpoints.
+!/GVHMR/hmr4d/utils/body_model/coco_aug_dict.pth
+!/GVHMR/hmr4d/utils/body_model/seg_part_info.npy
+!/GVHMR/hmr4d/utils/body_model/smplx2smpl_sparse.pt
+!/GVHMR/hmr4d/utils/body_model/smplx_verts437.pt
+!/GVHMR/hmr4d/utils/body_model/smpl_3dpw14_J_regressor_sparse.pt
+!/GVHMR/hmr4d/utils/body_model/smpl_coco17_J_regressor.pt
+!/GVHMR/hmr4d/utils/body_model/smpl_neutral_J_regressor.pt
+!/GVHMR/hmr4d/network/hmr2/configs/smpl_mean_params.npz
+!/GVHMR/hmr4d/dataset/bedlam/resource/vname2lwh.pt
+!/GVHMR/hmr4d/dataset/rich/resource/cam2params.pt
+
 # ==========================================
 # Logs / Temporary Files
 # ==========================================
 *.log
 logs/
+wandb/
+lightning_logs/
+tensorboard/
+runs/
+events.out.tfevents.*
+.hydra/
 tmp/
 temp/
 *.tmp
+*.part
+*.crdownload
+*.swp
+*.swo
+*~
 
 # ==========================================
 # Jupyter
 # ==========================================
 .ipynb_checkpoints/
-
-
-input/
-output/
-
-
