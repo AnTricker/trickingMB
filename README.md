@@ -21,7 +21,7 @@
 |---|---|---|---|
 | RTMPose + MotionBERT | RTMPose Halpe-26 2D → MotionBERT 3D Pose / SMPL Mesh | H36M-17 `(T,17,3)` NumPy、骨架影片、Mesh 影片 | `rtmpose/run.py`、`MotionBERT/batch_infer.py` |
 | MotionAGFormer | YOLOv3 + HRNet 2D → Transformer-GCNFormer 3D Pose | 2D Keypoints NPZ、2D / 3D / 合成影格、合成影片 | `MotionAGFormer/batch_infer.py`、`demo/vis.py` |
-| GVHMR | 人物追蹤、ViTPose / HMR2 特徵、相機運動估計 → 人體參數與全域動作 | `hmr4d_results.pt`、相機視角 / 全域 Mesh 影片 | `GVHMR/tools/demo/demo_folder.py`、`demo.py` |
+| GVHMR | 人物追蹤、ViTPose / HMR2 特徵、相機運動估計 → 人體參數與全域動作 | `hmr4d_results.pt`、相機視角 / 全域 Mesh 影片 | `GVHMR/batch_infer.py`、`tools/demo/demo.py` |
 
 三條流程各自處理 2D 或影像特徵；MotionAGFormer 與 GVHMR 的現有入口不讀取 RTMPose AlphaPose JSON。MotionBERT 與 MotionAGFormer 的骨架結果，以及 GVHMR 的人體參數，需先統一關節、座標、尺度與時間定義，才能進行跨方法數值比較。
 
@@ -51,15 +51,16 @@ motionBert/
 │   ├── demo/vis.py
 │   └── demo/output/              # 目前 demo 固定的輸出位置
 └── GVHMR/
+    ├── batch_infer.py             # 遞迴推論、續跑與合併影片整理
     ├── tools/demo/demo.py
     ├── tools/demo/demo_folder.py
     ├── inputs/checkpoints/
-    └── outputs/demo/
+    └── outputs/                   # 批次入口依 input 分類存放
 ```
 
 以下執行指令以 **Windows Anaconda Prompt / CMD**、專案位於 `C:\coding\motionBert` 為例；請依實際路徑調整。各流程使用自己的 Conda environment。`output-l` 是範例中透過參數指定的資料夾名稱，不是自動產生的模型設定。
 
-將原速影片放入根目錄 `input/`。批次入口只掃描指定資料夾第一層；MotionBERT / MotionAGFormer 支援 `.mp4`、`.mov`、`.avi`、`.mkv`，GVHMR 的資料夾入口只掃描 `.mp4` / `.MP4`。以下複製指令以 `.mp4` 為例。
+將原速影片放入根目錄 `input/`。MotionBERT / MotionAGFormer 的批次入口只掃描指定資料夾第一層，支援 `.mp4`、`.mov`、`.avi`、`.mkv`。GVHMR 的 `batch_infer.py` 遞迴掃描所有子資料夾的 `.mp4`（副檔名不分大小寫）；上游 `demo_folder.py` 只掃描第一層。以下複製指令以 `.mp4` 為例。
 
 ### Git 管理方式
 
@@ -183,13 +184,17 @@ MotionAGFormer/demo/output/aerial/
 ## 5. GVHMR 指令
 
 GVHMR 透過人物追蹤、ViTPose 與 HMR2 影像特徵估計人體參數與全域動作，並渲染相機視角及全域 Mesh。它有獨立的 Checkpoint 與 SMPL / SMPL-X 部署需求，見後方補充說明。
+### 5.0 需開WSL才能用這邊
+```
+(base) root@An:/mnt/c/coding/motionBert# conda activate gvhmr
+(gvhmr) root@An:/mnt/c/coding/motionBert# 
+```
 
 ### 5.1 共用影片資料夾批次推論
 
 一般相機運動估計使用預設的 SimpleVO：
 
 ```cmd
-conda activate gvhmr
 cd /d C:\coding\motionBert\GVHMR
 python tools/demo/demo_folder.py -f ../input -d outputs/demo
 ```
@@ -199,6 +204,35 @@ python tools/demo/demo_folder.py -f ../input -d outputs/demo
 ```cmd
 python tools/demo/demo_folder.py -f ../input -d outputs/demo -s
 ```
+
+上述為上游第一層資料夾入口。處理目前多層 `input/`，請使用新增的遞迴入口：
+
+```cmd
+python batch_infer.py
+```
+
+預設路徑依腳本位置解析，不受執行目錄影響；整理影片預設存放於專案根目錄的 `output/Output_InCam_Global_Horizon/`。自訂相對路徑則相對於執行時的工作目錄。自訂路徑或指定固定相機：
+
+```cmd
+python batch_infer.py --input ../input --output-root outputs --summary-root ../output/Output_InCam_Global_Horizon
+python batch_infer.py -s
+```
+
+輸出會自動建立並保留輸入分類，例如：
+
+```text
+input/1twist/cork/corkscrew.mp4
+GVHMR/outputs/1twist/cork/corkscrew/hmr4d_results.pt
+GVHMR/outputs/1twist/cork/corkscrew/corkscrew_3_incam_global_horiz.mp4
+output/Output_InCam_Global_Horizon/1twist/cork/corkscrew_3_incam_global_horiz.mp4
+```
+
+- 原始合併影片已存在：完全跳過 GVHMR；整理區缺檔時才直接複製，保留結果影片原檔名與內容，不重新編碼。
+- 只有 `hmr4d_results.pt`：呼叫單影片入口，沿用快取補渲染／合併；沒有推論結果時才執行完整流程。
+- 整理區已有對應影片：跳過複製，不覆寫。判斷僅依檔案存在，不檢查影片內容；更換輸入、模型或相機設定時請使用新的輸出與整理根目錄。
+- 開始前檢查同分類的 stem 衝突（含大小寫差異）；發現衝突就報錯。輸出及整理根目錄必須位於輸入資料夾之外，避免產物被再次掃描。
+- 個別影片失敗後繼續處理；子程序失敗或缺少合併影片時不複製該支影片，最後有失敗即回傳非零 exit code。
+- 最後統計 `inference`（選擇完整推論的次數）、`reused`（沿用影片或推論資料的次數）、`copied`、`skipped`（已有整理影片）與 `failed`。前兩者包含失敗的嘗試，計數可重疊。無輸入影片時顯示零筆並正常結束。
 
 ### 5.2 單影片推論
 
@@ -210,7 +244,7 @@ python tools/demo/demo.py --video ../input/aerial.mp4 --output_root outputs/stat
 - `-s` / `--static_cam` 僅適用固定相機。
 - `--use_dpvo` 是單影片入口的選用參數，需另外安裝 DPVO；未指定時使用 SimpleVO。
 - `--f_mm` 可在單影片入口指定全片幅等效焦距；`--verbose` 可輸出額外預處理視覺化。
-- 資料夾入口逐支啟動子程序，遇到失敗就中止。已有的預處理與重建檔案會被重用；更換影片、設定或模型時，請指定新的輸出根目錄。
+- 上游 `demo_folder.py` 逐支啟動子程序，遇到失敗就中止；新增的 `batch_infer.py` 則繼續處理。已有的預處理與重建檔案會被重用；更換影片、設定或模型時，請指定新的輸出根目錄。
 
 ```text
 GVHMR/outputs/demo/aerial/
